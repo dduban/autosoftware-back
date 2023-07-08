@@ -19,8 +19,10 @@ class MessageController extends AbstractController
 
     public function __construct(
         MessageRepository $messageRepository,
+        SerializerInterface $serializer
     )
     {
+        $this->serializer = $serializer;
         $this->messageRepository = $messageRepository;
     }
 
@@ -33,6 +35,8 @@ class MessageController extends AbstractController
         $message->setCreateDate(new \DateTime());
 
         $this->messageRepository->save($message, true);
+
+        $this->messageRepository->saveMessageToFile($message);
 
         return new JsonResponse(['uuid' => $message->getId()], 201);
     }

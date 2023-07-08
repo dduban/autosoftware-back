@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Message;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @extends ServiceEntityRepository<Message>
@@ -17,10 +18,17 @@ use Doctrine\Persistence\ManagerRegistry;
 class MessageRepository extends ServiceEntityRepository
 {
     public const SORT_UUID = 'uuid';
+    public const FILE_PATH = '/temp/message/';
 
-    public function __construct(ManagerRegistry $registry)
+    public SerializerInterface $serializer;
+
+    public function __construct(
+        ManagerRegistry $registry,
+        SerializerInterface $serializer
+    )
     {
         parent::__construct($registry, Message::class);
+        $this->serializer = $serializer;
     }
 
     public function save(Message $entity, bool $flush = false): void
@@ -50,12 +58,28 @@ class MessageRepository extends ServiceEntityRepository
                 $qb->orderBy('m.uuid', 'ASC');
                 break;
             default:
-                // Domyślne sortowanie po czasie utworzenia
                 $qb->orderBy('m.createDate', 'DESC');
                 break;
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    public function saveMessageToFile(Message $message): void
+    {
+        $messageFilePath = self::FILE_PATH . 'msg' . $message->getId() . '.json';
+
+        $messageData = [
+            'id' => $message->getId(),
+            'content' => $message->getContent(),
+            'createDate' => $message->getCreateDate()->format('Y-m-d H:i:s'),
+        ];
+
+        $messageJson = $this->serializer->serialize($messageData, 'json', [
+            'json_encode_options' => JSON_PRETTY_PRINT,
+        ]);
+
+        file_put_contents($messageFilePath, $messageJson);
     }
 
 }
