@@ -37,5 +37,22 @@ class MessageController extends AbstractController
         return new JsonResponse(['uuid' => $message->getId()], 201);
     }
 
+    #[Route('/list', name: 'list', methods: ['GET'])]
+    public function listMessages(Request $request): JsonResponse
+    {
+        $sortBy = $request->query->get('sort_by');
+        $messages = $this->messageRepository->findAllSorted($sortBy);
+
+        $responseData = [];
+        foreach ($messages as $message) {
+            $responseData[] = [
+                'id' => $message->getId(),
+                'content' => $message->getContent(),
+                'createDate' => $message->getCreateDate()->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        return new JsonResponse($responseData);
+    }
 
 }
