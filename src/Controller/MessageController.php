@@ -55,4 +55,16 @@ class MessageController extends AbstractController
         return new JsonResponse($responseData);
     }
 
+    #[Route('/{uuid}', name: 'get_message', requirements: ["uuid" => "\d+"], methods: ['GET'])]
+    public function getMessageAction(int $uuid, MessageRepository $messageRepository): JsonResponse
+    {
+        $message = $messageRepository->findOneBy(['uuid' => $uuid]);
+
+        if (!$message) {
+            throw new NotFoundHttpException('Message not found');
+        }
+
+        return new JsonResponse(['content' => $message->getContent()]);
+    }
+
 }
